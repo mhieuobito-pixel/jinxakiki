@@ -1,0 +1,7 @@
+<h2>Đăng ký Mờ Hiếu Chat</h2>
+<form method="POST" action="/register">
+  <input name="username" placeholder="Tài khoản" required />
+  <input name="password" type="password" placeholder="Mật khẩu" required />
+  <button>Đăng ký</button>
+</form>
+<a href="login.html">Đã có tài khoản?</a>

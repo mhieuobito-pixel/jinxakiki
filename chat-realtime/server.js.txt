@@ -1,0 +1,81 @@
+const express = require("express");
+const http = require("http");
+const session = require("express-session");
+const bcrypt = require("bcrypt");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// ====== DATABASE GIẢ (RAM) ======
+const users = []; // { username, passwordHash, ip }
+const registeredIPs = new Set();
+
+// ====== MIDDLEWARE ======
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
+
+app.use(session({
+  secret: "mo-hieu-chat-secret",
+  resave: false,
+  saveUninitialized: true
+}));
+
+// ====== ĐĂNG KÝ ======
+app.post("/register", async (req, res) => {
+  const { username, password } = req.body;
+  const ip = req.ip;
+
+  if (!username || !password) {
+    return res.send("Thiếu thông tin");
+  }
+
+  if (registeredIPs.has(ip)) {
+    return res.send("IP này đã đăng ký rồi");
+  }
+
+  const exists = users.find(u => u.username === username);
+  if (exists) {
+    return res.send("Tài khoản đã tồn tại");
+  }
+
+  const hash = await bcrypt.hash(password, 10);
+
+  users.push({ username, passwordHash: hash, ip });
+  registeredIPs.add(ip);
+
+  res.redirect("/login.html");
+});
+
+// ====== ĐĂNG NHẬP ======
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = users.find(u => u.username === username);
+  if (!user) return res.send("Sai tài khoản");
+
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) return res.send("Sai mật khẩu");
+
+  req.session.user = username;
+  res.redirect("/chat.html");
+});
+
+// ====== KIỂM TRA LOGIN ======
+app.get("/me", (req, res) => {
+  if (!req.session.user) return res.json({ loggedIn: false });
+  res.json({ loggedIn: true, username: req.session.user });
+});
+
+// ====== SOCKET CHAT ======
+io.on("connection", socket => {
+  socket.on("send", data => {
+    io.emit("msg", data);
+  });
+});
+
+server.listen(3000, () => {
+  console.log("Mờ Hiếu Chat chạy tại http://localhost:3000");
+});

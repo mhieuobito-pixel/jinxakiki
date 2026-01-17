@@ -1,0 +1,7 @@
+<h2>Mờ Hiếu Chat</h2>
+<div id="box" style="height:300px;overflow:auto;border:1px solid #000"></div>
+<input id="msg" placeholder="Nhập tin nhắn" />
+<button onclick="send()">Gửi</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="chat.js"></script>

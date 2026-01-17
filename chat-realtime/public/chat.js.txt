@@ -1,0 +1,20 @@
+const socket = io();
+const box = document.getElementById("box");
+const input = document.getElementById("msg");
+
+fetch("/me").then(r => r.json()).then(d => {
+  if (!d.loggedIn) location.href = "/login.html";
+  window.username = d.username;
+});
+
+socket.on("msg", data => {
+  const div = document.createElement("div");
+  div.innerText = data.user + ": " + data.text;
+  box.appendChild(div);
+});
+
+function send() {
+  if (!input.value) return;
+  socket.emit("send", { user: username, text: input.value });
+  input.value = "";
+}
